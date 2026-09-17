@@ -67,7 +67,7 @@ The plugin is **not** on npm. Install it from your own Git host.
 ls ~/.dsh/profiles/web/node_modules/dsh-composer-fix/
 
 # To install from a fresh git clone:
-git clone https://github.com/<your-org>/dsh-composer-fix.git /tmp/dsh-composer-fix
+git clone https://github.com/LongCoderX/dsh-composer-fix.git /tmp/dsh-composer-fix
 cp -R /tmp/dsh-composer-fix ~/.dsh/profiles/web/node_modules/dsh-composer-fix
 ```
 
