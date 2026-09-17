@@ -1,6 +1,6 @@
 {
   "name": "dsh-composer-fix",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Pin the DeepSeek Harness conversation composer to the bottom of the viewport and reserve scroll space equal to the composer height. Pure CSS overlay; survives upstream dsh upgrades.",
   "type": "commonjs",
   "main": "./lib/client.js",

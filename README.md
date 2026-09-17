@@ -1,19 +1,22 @@
 # dsh-composer-fix
 
 Pin the DeepSeek Harness conversation composer (input box) to the bottom
-of the viewport in both hero and active phases, hide the orphan stats dock
-in hero, and reserve scroll space equal to the composer height so
-messages can scroll past the composer when it grows.
+of the viewport across all phases, hide the orphan stats dock in hero,
+reserve scroll space equal to the composer height so messages can
+scroll past it, and react to the right sidebar opening/closing so the
+dialog never extends behind the rightbar.
 
-Pure CSS overlay — no upstream bundle edits. Survives `dsh upgrade` /
-`npm install` because the plugin lives in user-owned paths (`~/.dsh/`).
-Loaded via the Cordis HMR channel through `cordis.patch.yml`'s `insert:`
-syntax, so no server restart is needed to install or remove.
+Pure-CSS overlay with a tiny bit of JS for the rightbar width
+publishing — no upstream bundle edits. Survives `dsh upgrade` /
+`npm install` because the plugin lives in user-owned paths
+(`~/.dsh/`). Loaded via the Cordis HMR channel through
+`cordis.patch.yml`'s `insert:` syntax, so no server restart is
+needed to install or remove.
 
 ## What it fixes
 
-Upstream (and the `deep-current` skin) lay the composer out in three
-ways that don't quite work for everyone:
+Upstream (and the `deep-current` skin) lay the composer out in ways
+that don't quite work for everyone:
 
 - **Hero phase** ("new conversation" page): the composer sits in the
   middle of the viewport at a non-zero offset from the bottom; a
@@ -25,35 +28,46 @@ ways that don't quite work for everyone:
 - **Active phase** (existing session, dialog grows tall): the last
   message gets covered by the expanding composer because the
   conversation area doesn't reserve room for it.
-- **Active phase** (right sidebar open): the dialog has a fixed
+- **Active phase, trajectory / overlay tab**: the upstream
+  `.scrollBody:has([data-conversation-composer-overlay])>.composerSeat
+  { position: absolute }` rule pins the dialog to the overlay
+  container — which when the view content is short leaves the dialog
+  floating mid-page.
+- **Active phase, right sidebar open**: the dialog has a fixed
   `right: 0` so it extends behind the rightbar, hiding part of the
   input.
 
-This plugin fixes all four with one CSS file injected on every page
-load.
+This plugin fixes all five with one CSS file (plus a tiny
+ResizeObserver-driven JS helper) injected on every page load.
 
 ## How it works
 
 The plugin's `lib/client.js` is a CommonJS module that exports
 `{ apply, inject }`. The `apply` hook injects a `<style>` tag into
-the document head containing all the override CSS. Because the
-plugin is registered via the `insert:` directive in
-`cordis.patch.yml`, Cordis HMR picks it up without a server
-restart.
+the document head containing all the override CSS, and also starts a
+`MutationObserver` that watches the AppFrame's `grid-template-columns`
+inline style and re-publishes the sidebar / rightbar widths to
+`--dsw-frame-sidebar-width` and `--dsw-frame-rightbar-width`. Because
+the plugin is registered via the `insert:` directive in
+`cordis.patch.yml`, Cordis HMR picks it up without a server restart.
 
-The active-phase fix uses `position: absolute` with `left: 0;
-right: 0` and **deliberately does not set `position` on
-`scrollBody`**, so the absolute containing block is the next
-positioned ancestor up — `wSkVaW_root`, which lives inside
-`centerCol`. When the right sidebar opens or closes,
-`centerCol`'s width changes (driven by the AppFrame grid), and the
-dialog width follows automatically.
+The four positioning rules:
 
-The active-phase `padding-bottom: var(--dsh-composer-height, 0px)
-!important` is the load-bearing trick: the upstream conversation
-package writes a `ResizeObserver` that already updates that CSS
-variable on every composer resize; this plugin just consumes it
-to reserve scroll space equal to the composer's height.
+| Phase | Strategy | Why |
+|-------|-----------|-----|
+| **Hero** | `position: fixed; bottom: 0; left: var(--sidebar); right: var(--rightbar)` | `position: sticky` doesn't engage when content fits; `position: absolute` against a parent that may not fill the viewport also fails. `fixed` against the viewport always works. |
+| **Active** | same as hero, plus `padding-bottom: var(--dsh-composer-height, 0px) !important` on `.scrollBody` | The upstream ResizeObserver publishes the composer height into `--dsh-composer-height`; we consume it to reserve scroll space so the last message can't be hidden by the growing dialog. |
+| **Trajectory / overlay** | explicit override: `.scrollBody:has([data-conversation-composer-overlay]) > [data-composer-seat] { position: fixed !important; ... }` | upstream sets `position: absolute; bottom: 0` which is short-content-fragile; we override to `fixed`. |
+| **Sidebar resize** | `MutationObserver` on `[data-dsh-frame]`'s `style` attribute | Parses the new `grid-template-columns` value, republishes `--dsw-frame-sidebar-width` and `--dsw-frame-rightbar-width`, and the dialog width follows automatically. |
+
+The `scrollbar-gutter: auto !important` rule replaces upstream's
+`stable`, which reserved 8px of space for a scrollbar that wasn't
+always there — that 8px gap was the visible "shadow" between the
+dialog and the viewport bottom in the chat case.
+
+The `[data-composer-stats]` hide in hero stops the previous
+session's token-usage summary from leaking onto the new-conversation
+page.
 
 ## Install
 
@@ -89,8 +103,13 @@ and refresh the browser a few seconds later.)
 
 ```bash
 # In a browser devtools console, after the page loads:
-JSON.stringify(!!document.querySelector('style[data-plugin-css="dsh-composer-fix/styles.css"]'))
-// → true
+JSON.stringify({
+  css: !!document.querySelector('style[data-plugin-css="dsh-composer-fix/styles.css"]'),
+  sidebar: getComputedStyle(document.documentElement).getPropertyValue('--dsw-frame-sidebar-width'),
+  rightbar: getComputedStyle(document.documentElement).getPropertyValue('--dsw-frame-rightbar-width'),
+  seatBottom: document.querySelector('[data-composer-seat]')?.getBoundingClientRect().bottom
+})
+// → { css: true, sidebar: "280px", rightbar: "0px", seatBottom: 597 (== viewport) }
 ```
 
 ## Uninstall
@@ -128,12 +147,13 @@ dsh-composer-fix/
 ├── README.md
 ├── LICENSE
 ├── package.json
+├── CHANGELOG.md
 ├── cordis.patch.yml          # Plugin metadata consumed by dsh loader
 ├── lib/
-│   └── client.js             # CSS string + module.exports.{apply,inject}
+│   └── client.js             # CSS string + module.exports.{apply,inject} + ResizeObserver
 └── .github/
     └── workflows/
-        └── ci.yml            # (Optional) Node version matrix check
+        └── ci.yml            # CI smoke load
 ```
 
 ## License
