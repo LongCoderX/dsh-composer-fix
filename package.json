@@ -1,0 +1,54 @@
+{
+  "name": "dsh-composer-fix",
+  "version": "0.1.0",
+  "description": "Pin the DeepSeek Harness conversation composer to the bottom of the viewport and reserve scroll space equal to the composer height. Pure CSS overlay; survives upstream dsh upgrades.",
+  "type": "commonjs",
+  "main": "./lib/client.js",
+  "exports": {
+    ".": "./lib/client.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "ui-fix",
+    "conversation-composer"
+  ],
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.1.5-rc.1"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "zhige",
+    "url": "https://github.com/zhige"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhige/dsh-composer-fix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhige/dsh-composer-fix/issues"
+  },
+  "homepage": "https://github.com/zhige/dsh-composer-fix#readme"
+}

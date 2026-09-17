@@ -1,0 +1,22 @@
+# Insert dsh-composer-fix: a tiny client-only plugin that overlays CSS
+# rules on top of @deepseek-ai/dsh-client-ui-conversation so the
+# composer (input box) is pinned to the bottom of the viewport and the
+# conversation area can scroll past it.
+#
+# The fix is pure CSS (no JSX overrides), so it survives upstream dsh
+# upgrades — only this plugin file needs to be kept around. To uninstall
+# just remove this directory.
+#
+# Why this exists:
+#   - Hero phase (no session) used to leak a right scrollbar AND float the
+#     dialog in the middle of the page, allowing the user to scroll past it.
+#   - Active phase (existing session) used to keep the dialog at "sticky"
+#     bottom of the inner scroll area, but the inner scroll area is
+#     shorter than the viewport by the scrollbar-gutter (~8px), leaving an
+#     8px visible gap below the dialog.
+#   - When the dialog grew (longer input), the last message could be
+#     covered because the scroll area did not reserve space for the
+#     dialog's height.
+- insert:
+    - id: composer-fix
+      name: "dsh-composer-fix"

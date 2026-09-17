@@ -1,0 +1,17 @@
+# Node / package manager
+node_modules/
+*.log
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# dsh artifacts (in case someone runs `dsh web` from this repo)
+.dsh-module-fallback/
+
+# Test output
+coverage/
+*.lcov

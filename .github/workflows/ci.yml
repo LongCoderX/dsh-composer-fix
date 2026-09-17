@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    name: Smoke load
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Validate the plugin can be required as a CommonJS module
+        run: |
+          node -e "
+            const m = require('./lib/client.js');
+            if (typeof m.apply !== 'function') throw new Error('apply not exported');
+            if (typeof m.inject !== 'function') throw new Error('inject not exported');
+            // apply() is a cordis lifecycle hook; it injects a <style> tag
+            // and returns undefined. We just verify the call doesn't throw.
+            m.apply();
+            console.log('OK: client.js exports apply/inject, apply() ran without throwing');
+          "
+      - name: Lint (syntax check only, no build)
+        run: |
+          node --check lib/client.js
+      - name: Verify the cordis patch metadata round-trips
+        run: |
+          node -e "
+            const fs = require('fs');
+            const patch = fs.readFileSync('cordis.patch.yml', 'utf8');
+            const pkg = require('./package.json');
+            if (!pkg.name) throw new Error('package.json missing name');
+            if (!pkg['dsh'].bundle.patch) throw new Error('package.json missing dsh.bundle.patch');
+            if (!patch.includes('dsh-composer-fix')) throw new Error('cordis.patch.yml missing plugin name');
+            console.log('OK: dsh metadata coherent');
+          "
