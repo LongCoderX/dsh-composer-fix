@@ -40,15 +40,15 @@
   },
   "license": "MIT",
   "author": {
-    "name": "zhige",
-    "url": "https://github.com/zhige"
+    "name": "LongCoderX",
+    "url": "https://github.com/LongCoderX"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zhige/dsh-composer-fix.git"
+    "url": "git+ssh://git@github.com/LongCoderX/dsh-composer-fix.git"
   },
   "bugs": {
-    "url": "https://github.com/zhige/dsh-composer-fix/issues"
+    "url": "https://github.com/LongCoderX/dsh-composer-fix/issues"
   },
-  "homepage": "https://github.com/zhige/dsh-composer-fix#readme"
+  "homepage": "https://github.com/LongCoderX/dsh-composer-fix#readme"
 }
